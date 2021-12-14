@@ -15,3 +15,15 @@ How to use:
 - Last, you just instanciate the PassboltAPI passing your user fingerprint, it will then ask your passphrase, login, and get the CsrfToke setup for later use.
 
 Then you can just use the already build functions to read/create/update your passbolt or create your own using mines as model. 
+
+- example:
+`
+def add_to_all_groups(user_email, is_admin=False):
+    api = PassboltAPI('833DDC08501714B816AD6FFA2B56DC5702A012C0')
+    user_id = api.get_user_by_email(user_email)['id']
+    print(user_id)
+    groups = api.get_groups()
+    for group in groups:
+        print(group['name'])
+        print(api.put_user_on_group(group['id'], user_id, is_admin))
+`
