@@ -17,7 +17,7 @@ How to use:
 Then you can just use the already build functions to read/create/update your passbolt or create your own using mines as model. 
 
 - example:
-`
+```python
 def add_to_all_groups(user_email, is_admin=False):
     api = PassboltAPI('833DDC08501714B816AD6FFA2B56DC5702A012C0')
     user_id = api.get_user_by_email(user_email)['id']
@@ -26,4 +26,4 @@ def add_to_all_groups(user_email, is_admin=False):
     for group in groups:
         print(group['name'])
         print(api.put_user_on_group(group['id'], user_id, is_admin))
-`
+```
