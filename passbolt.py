@@ -10,6 +10,7 @@ class PassboltAPI:
     def __init__(self, fingerprint):
 
         self.base_url = 'https://192.168.65.145'
+        self.gpgbinary = 'C:\\Program Files (x86)\\GnuPG\\bin\\gpg.exe'
         self.login_url = f'{self.base_url}/auth/login.json'
         self.users_url = f'{self.base_url}/users.json'
         self.me_url = f'{self.base_url}/users/me.json'
@@ -48,12 +49,12 @@ class PassboltAPI:
             pprint(decoded_response)
 
     def decrypt(self, message):
-        gpg = gnupg.GPG(gpgbinary='C:\\Program Files (x86)\\GnuPG\\bin\\gpg.exe')
+        gpg = gnupg.GPG(gpgbinary=self.gpgbinary)
         decrypt = gpg.decrypt(message)
         return decrypt
 
     def encrypt(self, message, public_key):
-        gpg = gnupg.GPG(gpgbinary='C:\\Program Files (x86)\\GnuPG\\bin\\gpg.exe')
+        gpg = gnupg.GPG(gpgbinary=self.gpgbinary)
         gpg.import_keys(public_key['armored_key'])
         encrypt = gpg.encrypt(message, public_key['fingerprint'], always_trust=True)
         return encrypt
