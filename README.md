@@ -27,3 +27,25 @@ def add_to_all_groups(user_email, is_admin=False):
         print(group['name'])
         print(api.put_user_on_group(group['id'], user_id, is_admin))
 ```
+
+## How to import OpenPGP key in config.json file
+
+### Linux:
+
+```
+sed -z 's/\n/\\n/g' zerocool.asc
+```
+
+### MacOS
+
+Install `gnu-sed` with brew:
+
+```
+$ brew install gnu-sed
+```
+
+Use gsed instead of sed:
+
+```
+gsed -z 's/\n/\\n/g' zerocool.asc
+```
