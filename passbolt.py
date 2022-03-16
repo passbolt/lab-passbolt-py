@@ -5,6 +5,7 @@ from urllib.parse import unquote
 import gnupg
 import tempfile
 import shutil
+from pathlib import Path
 
 # https://gnupg.readthedocs.io/en/latest/
 # https://gist.github.com/ryantuck/56c5aaa8f9124422ac964629f4c8deb0
@@ -51,7 +52,8 @@ class PassboltAPI:
         shutil.rmtree(self.gnupghome)
 
     def load_json_config(self):
-        with open("config.json") as config_file:
+        _script_path = Path(__file__).parent.resolve()
+        with open(Path(_script_path, "config.json")) as config_file:
             self.config = json.load(config_file)
 
     def stage1(self):
