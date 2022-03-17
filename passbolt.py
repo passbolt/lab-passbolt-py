@@ -6,18 +6,27 @@ import gnupg
 import tempfile
 import shutil
 from pathlib import Path
+import os
 
 # https://gnupg.readthedocs.io/en/latest/
 # https://gist.github.com/ryantuck/56c5aaa8f9124422ac964629f4c8deb0
 
 
 class PassboltAPI:
-    def __init__(self):
+    def __init__(
+        self,
+        config_filename="config.json",
+        config_filepath=Path(__file__).parent.resolve(),
+        dict_config=dict(),
+    ):
 
-        self.load_json_config()
+        self.load_config(
+            config_filename=config_filename,
+            config_filepath=config_filepath,
+            dict_config=dict_config,
+        )
 
         self.gnupghome = tempfile.mkdtemp()
-        print(self.gnupghome)
         self.gpg = gnupg.GPG(
             gpgbinary=self.config.get("gpgbinary", "gpg"), gnupghome=self.gnupghome
         )
@@ -51,10 +60,25 @@ class PassboltAPI:
         """
         shutil.rmtree(self.gnupghome)
 
-    def load_json_config(self):
-        _script_path = Path(__file__).parent.resolve()
-        with open(Path(_script_path, "config.json")) as config_file:
-            self.config = json.load(config_file)
+    def load_config(
+        self,
+        config_filename="config.json",
+        config_filepath=Path(__file__).parent.resolve(),
+        dict_config=dict(),
+    ):
+
+        if dict_config:
+            self.config = dict_config
+        elif Path(config_filepath, config_filename).is_file():
+            with open(Path(config_filepath, config_filename)) as config_file:
+                self.config = json.load(config_file)
+        else:
+            self.config = {
+                "gpgbinary": os.environ.get("PASSBOLT_GPGBINARY", "gpg"),
+                "base_url": os.environ.get("PASSBOLT_BASEURL", "https://undefined"),
+                "private_key": os.environ.get("PASSBOLT_PRIVATE_KEY", "undefined"),
+                "passphrase": os.environ.get("PASSBOLT_PASSPHRASE", "gpg"),
+            }
 
     def stage1(self):
         post = {"data": {"gpg_auth": {"keyid": self.FINGERPRINT}}}
