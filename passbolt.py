@@ -273,3 +273,10 @@ class PassboltAPI:
 
         secrete_data = json.loads(response.text)["body"]
         return secrete_data
+
+    def get_resource_per_uuid(self, uuid):
+        url = f"{self.base_url}/resources/{uuid}.json"
+        response = self.session.get(url)
+
+        secrete_data = json.loads(response.text)["body"]
+        return secrete_data

@@ -13,7 +13,8 @@ import gnupg
 #
 # sys.exit(0)
 p = PassboltAPI()
-p.get_resources()
+print(p.get_resource_per_uuid("64107118-bc0e-40ff-ae19-2b60c7516e19"))
+sys.exit(0)
 resource = next(item for item in p.get_resources() if item["name"] == "Snyk")
 res = json.loads(p.decrypt(p.get_resource_secret(resource["id"])).data)
 
