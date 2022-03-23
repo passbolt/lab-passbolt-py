@@ -2,14 +2,11 @@ import httpx
 from pprint import pprint
 import json
 from urllib.parse import unquote
-import gnupg
-import tempfile
-import shutil
 from pathlib import Path
 import os
+from pgpy import PGPKey, PGPMessage
 
-# https://gnupg.readthedocs.io/en/latest/
-# https://gist.github.com/ryantuck/56c5aaa8f9124422ac964629f4c8deb0
+# https://pgpy.readthedocs.io/en/latest/examples.html
 
 
 class PassboltAPI:
@@ -26,15 +23,9 @@ class PassboltAPI:
             dict_config=dict_config,
         )
 
-        self.gnupghome = tempfile.mkdtemp()
-        self.gpg = gnupg.GPG(
-            gpgbinary=self.config.get("gpgbinary", "gpg"), gnupghome=self.gnupghome
-        )
-
         # Load key
-        self.FINGERPRINT = self.gpg.import_keys(
-            self.config.get("private_key")
-        ).fingerprints[0]
+        self.key, _ = PGPKey.from_blob(self.config.get("private_key"))
+        self.fingerprint = self.key.fingerprint.replace(" ", "")
 
         self.base_url = self.config.get("base_url")
         self.login_url = f"{self.base_url}/auth/login.json"
@@ -54,12 +45,6 @@ class PassboltAPI:
 
         self.login()
 
-    def __del__(self):
-        """
-        Destroy temporary gpghome when object is destroyed
-        """
-        shutil.rmtree(self.gnupghome)
-
     def load_config(
         self,
         config_filename="config.json",
@@ -74,14 +59,13 @@ class PassboltAPI:
                 self.config = json.load(config_file)
         else:
             self.config = {
-                "gpgbinary": os.environ.get("PASSBOLT_GPGBINARY", "gpg"),
                 "base_url": os.environ.get("PASSBOLT_BASEURL", "https://undefined"),
                 "private_key": os.environ.get("PASSBOLT_PRIVATE_KEY", "undefined"),
                 "passphrase": os.environ.get("PASSBOLT_PASSPHRASE", "gpg"),
             }
 
     def stage1(self):
-        post = {"data": {"gpg_auth": {"keyid": self.FINGERPRINT}}}
+        post = {"data": {"gpg_auth": {"keyid": self.fingerprint}}}
 
         response = self.session.post(self.login_url, json=post)
         decoded_response = json.loads(response.text)
@@ -96,26 +80,24 @@ class PassboltAPI:
             pprint(decoded_response)
 
     def decrypt(self, message):
-        decrypt = self.gpg.decrypt(message, passphrase=self.config.get("passphrase"))
-        return decrypt
+        # can return str ou bytearray
+        pgp_message = PGPMessage.from_blob(message)
+        with self.key.unlock(self.config.get("passphrase")):
+            return self.key.decrypt(pgp_message).message
 
     def encrypt(self, message, public_key):
-        self.gpg.import_keys(public_key["armored_key"])
-        encrypt = self.gpg.encrypt(
-            message, public_key["fingerprint"], always_trust=True
-        )
-        return encrypt
+        pubkey, _ = PGPKey.from_blob(public_key["armored_key"])
+        return pubkey.encrypt(message)
 
     def stage2(self, nonce):
         post = {
             "data": {
-                "gpg_auth": {"keyid": self.FINGERPRINT, "user_token_result": nonce}
+                "gpg_auth": {"keyid": self.fingerprint, "user_token_result": nonce}
             }
         }
 
         response = self.session.post(self.login_url, json=post)
         decoded_response = json.loads(response.text)
-        # self.USER_ID = decoded_response['body']['id']
 
         if decoded_response["header"]["code"] == 200:
             return True
@@ -138,7 +120,7 @@ class PassboltAPI:
 
     def login(self):
         self.pgp_message = self.stage1()
-        self.nonce = self.decrypt(self.pgp_message)
+        self.nonce = self.decrypt(self.pgp_message).decode()
         self.authenticated = self.stage2(str(self.nonce))
         self.get_cookie()
         self.check_login()

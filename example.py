@@ -17,7 +17,7 @@ resource = next(item for item in p.get_resources() if item["name"] == "Snyk")
 pprint(resource)
 
 # Descrypt Snyk secrets
-res = json.loads(p.decrypt(p.get_resource_secret(resource["id"])).data)
+res = json.loads(p.decrypt(p.get_resource_secret(resource["id"])))
 
 print()
 print("Display Snyk password")
