@@ -5,6 +5,7 @@ from urllib.parse import unquote
 from pathlib import Path
 import os
 from pgpy import PGPKey, PGPMessage
+import gnupg
 
 # https://pgpy.readthedocs.io/en/latest/examples.html
 
@@ -12,20 +13,20 @@ from pgpy import PGPKey, PGPMessage
 class PassboltAPI:
     def __init__(
         self,
-        config_filename="config.json",
-        config_filepath=Path(__file__).parent.resolve(),
         dict_config=dict(),
     ):
 
         self.load_config(
-            config_filename=config_filename,
-            config_filepath=config_filepath,
             dict_config=dict_config,
         )
 
         # Load key
-        self.key, _ = PGPKey.from_blob(self.config.get("private_key"))
-        self.fingerprint = self.key.fingerprint.replace(" ", "")
+        if self.config.get("gpg_library", "PGPy") == "gnupg":
+            self.gpg = gnupg.GPG(gpgbinary=self.config.get("gpgbinary", "gpg"))
+            self.fingerprint = self.config.get("fingerprint", "")
+        else:
+            self.key, _ = PGPKey.from_blob(self.config.get("private_key"))
+            self.fingerprint = self.key.fingerprint.replace(" ", "")
 
         self.base_url = self.config.get("base_url")
         self.login_url = f"{self.base_url}/auth/login.json"
@@ -36,32 +37,29 @@ class PassboltAPI:
         # vars definition
         self.authenticated = False
         self.token = None
-        self.USER_ID = None
+        self.user_id = None
         self.pgp_message = None
         self.nonce = None
 
-        self.session = httpx.Client(verify=False)
+        self.session = httpx.Client()
         self.cookies = httpx.Cookies()
 
         self.login()
 
     def load_config(
         self,
-        config_filename="config.json",
-        config_filepath=Path(__file__).parent.resolve(),
         dict_config=dict(),
     ):
 
         if dict_config:
             self.config = dict_config
-        elif Path(config_filepath, config_filename).is_file():
-            with open(Path(config_filepath, config_filename)) as config_file:
-                self.config = json.load(config_file)
         else:
             self.config = {
+                "gpg_binary": os.environ.get("PASSBOLT_GPG_BINARY", "gpg"),
+                "gpg_library": os.environ.get("PASSBOLT_GPG_LIBRARY", "PGPy"),
                 "base_url": os.environ.get("PASSBOLT_BASEURL", "https://undefined"),
                 "private_key": os.environ.get("PASSBOLT_PRIVATE_KEY", "undefined"),
-                "passphrase": os.environ.get("PASSBOLT_PASSPHRASE", "gpg"),
+                "passphrase": os.environ.get("PASSBOLT_PASSPHRASE", "undefined"),
             }
 
     def stage1(self):
@@ -80,14 +78,23 @@ class PassboltAPI:
             pprint(decoded_response)
 
     def decrypt(self, message):
-        # can return str ou bytearray
-        pgp_message = PGPMessage.from_blob(message)
-        with self.key.unlock(self.config.get("passphrase")):
-            return self.key.decrypt(pgp_message).message
+        if self.config.get("gpg_library", "PGPy") == "gnupg":
+            decrypt = self.gpg.decrypt(message)
+            return decrypt
+        else:
+            # can return str ou bytearray
+            pgp_message = PGPMessage.from_blob(message)
+            with self.key.unlock(self.config.get("passphrase")):
+                return self.key.decrypt(pgp_message).message
 
     def encrypt(self, message, public_key):
-        pubkey, _ = PGPKey.from_blob(public_key["armored_key"])
-        return pubkey.encrypt(message)
+        if self.config.get("gpg_library", "PGPy") == "gnupg":
+            self.gpg.import_keys(public_key["armored_key"])
+            encrypt = gpg.encrypt(message, public_key["fingerprint"], always_trust=True)
+            return encrypt
+        else:
+            pubkey, _ = PGPKey.from_blob(public_key["armored_key"])
+            return pubkey.encrypt(message)
 
     def stage2(self, nonce):
         post = {
@@ -108,7 +115,7 @@ class PassboltAPI:
         response = self.session.get(self.me_url)
         token = response.headers.get("set-cookie")
         user_id = json.loads(response.text)
-        self.USER_ID = user_id["body"]["id"]
+        self.user_id = user_id["body"]["id"]
         self.token = token[10:-8]
         self.session.headers = {"X-CSRF-Token": self.token}
 
@@ -120,7 +127,10 @@ class PassboltAPI:
 
     def login(self):
         self.pgp_message = self.stage1()
-        self.nonce = self.decrypt(self.pgp_message).decode()
+        if self.config.get("gpg_library", "PGPy") == "gnupg":
+            self.nonce = self.decrypt(self.pgp_message)
+        else:
+            self.nonce = self.decrypt(self.pgp_message).decode()
         self.authenticated = self.stage2(str(self.nonce))
         self.get_cookie()
         self.check_login()
@@ -156,7 +166,7 @@ class PassboltAPI:
     def create_group(self, group_name):
         post = {
             "name": group_name,
-            "groups_users": [{"user_id": self.USER_ID, "is_admin": True}],
+            "groups_users": [{"user_id": self.user_id, "is_admin": True}],
         }
 
         response = self.session.post(self.groups_url, json=post)

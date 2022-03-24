@@ -1,0 +1,6 @@
+{
+    "gpg_binary": "gpg",
+    "gpg_library": "gnupg",
+    "fingerprint": "1321159AE7BEE9EF9C4BBC7ECBAD2FB0C22FE70C",
+    "base_url": "https://passbolt.domain.tld",
+}
