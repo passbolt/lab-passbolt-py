@@ -1,8 +1,11 @@
-from passbolt.passbolt import PassboltAPI
+from passbolt import PassboltAPI
 from pprint import pprint
 import json
 
-p = PassboltAPI()
+with open("config.json") as config_file:
+    dict_config = json.load(config_file)
+
+p = PassboltAPI(dict_config=dict_config)
 
 print()
 print("Search for resource 64107118-bc0e-40ff-ae19-2b60c7516e19 (Supabase)")
