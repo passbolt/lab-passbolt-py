@@ -1,5 +1,4 @@
 {
-    "gpgbinary": "gpg",
     "base_url": "https://passbolt.domain.tld",
     "private_key": "-----BEGIN PGP PRIVATE KEY BLOCK-----\r\n\r\n Have a look at the README about how to convert your private key in one-line mode -----END PGP PRIVATE KEY BLOCK-----\r",
     "passphrase": "a-strong-passphrase"

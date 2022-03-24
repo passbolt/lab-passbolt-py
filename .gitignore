@@ -1,2 +1,4 @@
 __pycache__
 config.json
+dist
+py_passbolt.egg-info

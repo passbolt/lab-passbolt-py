@@ -1,4 +1,4 @@
-from passbolt import PassboltAPI
+from passbolt.passbolt import PassboltAPI
 from pprint import pprint
 import json
 
