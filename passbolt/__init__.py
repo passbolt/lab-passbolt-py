@@ -57,9 +57,10 @@ class PassboltAPI:
             self.config = {
                 "gpg_binary": os.environ.get("PASSBOLT_GPG_BINARY", "gpg"),
                 "gpg_library": os.environ.get("PASSBOLT_GPG_LIBRARY", "PGPy"),
-                "base_url": os.environ.get("PASSBOLT_BASEURL", "https://undefined"),
+                "base_url": os.environ.get("PASSBOLT_BASE_URL", "https://undefined"),
                 "private_key": os.environ.get("PASSBOLT_PRIVATE_KEY", "undefined"),
                 "passphrase": os.environ.get("PASSBOLT_PASSPHRASE", "undefined"),
+                "fingerprint": os.environ.get("PASSBOLT_FINGERPRINT", "undefined"),
             }
 
     def stage1(self):
