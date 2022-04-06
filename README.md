@@ -1,3 +1,9 @@
+```
+👩‍🔬  This project is part of the passbolt "lab!
+⚗️  It is used to illustrate an article or conversation starter.
+🧪  Use at your own risks!
+```
+
 # py-passbolt
 
 Python library for Passbolt API based on [httpx](https://www.python-httpx.org/) and [PGPy](https://pgpy.readthedocs.io/en/latest/).
