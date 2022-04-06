@@ -28,7 +28,7 @@ with open("requirements.txt") as fp:
     install_requires = fp.read()
 
 DESCRIPTION = "Python library for Passbolt, an open-source manager for teams"
-VERSION = "0.0.5"
+VERSION = "0.0.6"
 
 with open("README.md", "r") as fh:
     LONG_DESCRIPTION = fh.read()
@@ -41,8 +41,8 @@ setup(
     description=DESCRIPTION,
     long_description=LONG_DESCRIPTION,
     long_description_content_type="text/markdown",
-    url="https://gitlab.com/passbolt/labs/py-passbolt",
-    license="MIT-0",
+    url="https://github.com/passbolt/lab-passbolt-py",
+    license="MIT",
     packages=find_packages(),
     platforms=["any"],
     classifiers=[
