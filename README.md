@@ -14,6 +14,22 @@ MIT No Attribution - https://opensource.org/licenses/MIT-0
 
 # py-passbolt
 
+```
+👩 This project is part of the passbolt "lab"!
+⚗️  It is used to illustrate an article or conversation starter.
+🧪  Use at your own risks!
+```
+
+## Copyright & License
+
+(c) 2021 Passbolt SA
+
+Passbolt is registered trademark of Passbolt S.A.
+
+MIT No Attribution - https://opensource.org/licenses/MIT-0
+
+## About
+
 Python library for Passbolt API based on [httpx](https://www.python-httpx.org/) and [PGPy](https://pgpy.readthedocs.io/en/latest/).
 
 You can also use [python-gnupg](https://docs.red-dove.com/python-gnupg/) if needed but it is not the default.
