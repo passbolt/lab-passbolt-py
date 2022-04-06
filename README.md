@@ -1,8 +1,13 @@
 ```
-👩‍🔬  This project is part of the passbolt "lab!
+👩‍🔬  This project is part of the passbolt "lab"!
 ⚗️  It is used to illustrate an article or conversation starter.
 🧪  Use at your own risks!
 ```
+
+## License
+
+(c) 2021 Passbolt SA
+MIT No Attribution - https://opensource.org/licenses/MIT-0
 
 # py-passbolt
 
