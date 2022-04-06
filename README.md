@@ -1,6 +1,6 @@
 ```
 👩‍🔬  This project is part of the passbolt "lab"!
-⚗️  It is used to illustrate an article or conversation starter.
+⚗️  It is used to illustrate an article or as a conversation starter.
 🧪  Use at your own risks!
 ```
 
