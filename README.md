@@ -7,6 +7,7 @@
 ## Copyright & License
 
 (c) 2021 Passbolt SA
+
 Passbolt is registered trademark of Passbolt S.A.
 
 MIT No Attribution - https://opensource.org/licenses/MIT-0
