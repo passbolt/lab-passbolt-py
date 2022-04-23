@@ -46,6 +46,9 @@ class PassboltAPI:
 
         self.login()
 
+        # resource types
+        self.resource_types = self.get_resource_type_ids()
+
     def load_config(
         self,
         dict_config=dict(),
@@ -89,13 +92,33 @@ class PassboltAPI:
                 return self.key.decrypt(pgp_message).message
 
     def encrypt(self, message, public_key):
+        """
+        Encrypt a message for a given public key
+
+        :param message: message to encrypt
+        :type message: str
+        :public_key: passbolt gpgkey object
+        :type public_key: dict
+        :returns: Encrypted message
+        :rtype: str
+        """
+        if type(message) is dict:
+            message = json.dumps(message)
         if self.config.get("gpg_library", "PGPy") == "gnupg":
             self.gpg.import_keys(public_key["armored_key"])
-            encrypt = gpg.encrypt(message, public_key["fingerprint"], always_trust=True)
-            return encrypt
+            encrypt = self.gpg.encrypt(
+                message,
+                public_key["fingerprint"],
+                always_trust=True,
+                sign=self.fingerprint,
+            )
+            return str(encrypt)
         else:
             pubkey, _ = PGPKey.from_blob(public_key["armored_key"])
-            return pubkey.encrypt(message)
+            pgp_message = PGPMessage.new(message)
+            with self.key.unlock(self.config.get("passphrase")):
+                pgp_message |= self.key.sign(pgp_message)
+            return str(pubkey.encrypt(pgp_message))
 
     def stage2(self, nonce):
         post = {
@@ -247,6 +270,32 @@ class PassboltAPI:
         return response
 
     def get_user_public_key(self, user_id):
+        """
+        Return a gpgkey dictionary based on passbolt user_id parameter
+
+        {'armored_key': '-----BEGIN PGP PUBLIC KEY BLOCK-----\r\n'
+                        'Version: OpenPGP.js v4.10.9\r\n'
+                        'Comment: https:\\/\\/openpgpjs.org\r\n'
+                        '\r\n'
+                        '-----END PGP PUBLIC KEY BLOCK-----\r\n',
+         'bits': 2048,
+         'created': '2022-01-14T10:19:30+00:00',
+         'deleted': False,
+         'expires': None,
+         'fingerprint': '1321159AE7BEE9EF9C4BBC7ECBAD2FB0C22FE70C',
+         'id': '9a339ea9-ce31-40cc-8b66-f592e3d5acfa',
+         'key_created': '2022-01-14T10:19:24+00:00',
+         'key_id': 'C22FE70C',
+         'modified': '2022-01-14T10:19:30+00:00',
+         'type': 'RSA',
+         'uid': 'John Doe <johndoe@domain.tld>',
+         'user_id': 'd9143b6d-82bb-4093-9272-6471e222e990'}
+
+        :param user_id: The passbolt user_id we want to retrieve
+        :type user_id: str
+        :returns: gpgkey dictionary
+        :rtype: dict
+        """
         url = f"{self.base_url}/users/{user_id}.json"
         response = self.session.get(url)
 
@@ -273,3 +322,25 @@ class PassboltAPI:
 
         secrete_data = json.loads(response.text)["body"]
         return secrete_data
+
+    def create_resource(self, resource):
+        return self.session.post(f"{self.base_url}/resources.json", json=resource)
+
+    def get_resource_types(self):
+        """
+        Returns all available resource types. Currently 2 resources types available:
+        * password-string
+        * password-and-description
+
+        :returns: available resources types
+        :rtype: dict
+        """
+        response = self.session.get(f"{self.base_url}/resource-types.json")
+        decoded_response = json.loads(response.text)
+        return decoded_response["body"]
+
+    def get_resource_type_ids(self, per="slug"):
+        res = dict()
+        for item in self.get_resource_types():
+            res[item[per]] = item["id"]
+        return res
