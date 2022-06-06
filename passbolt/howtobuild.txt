@@ -1,0 +1,2 @@
+python setup.py sdist
+python3 -m twine upload dist/py-passbolt-0.0.x.tar.gz
