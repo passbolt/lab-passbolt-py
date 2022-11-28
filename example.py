@@ -29,9 +29,9 @@ r = p.create_resource(new_resource)
 print("New resource id: {}".format(json.loads(r.text)["body"]["id"]))
 
 print()
-print("Search for resource 64107118-bc0e-40ff-ae19-2b60c7516e19 (Supabase)")
+print("Search for resource 3c71cf73-52e1-4f55-ba0e-9888f633510c (Supabase)")
 print("------")
-pprint(p.get_resource_per_uuid("64107118-bc0e-40ff-ae19-2b60c7516e19"))
+pprint(p.get_resource_per_uuid("3c71cf73-52e1-4f55-ba0e-9888f633510c"))
 print()
 
 print("Search for the first resource who match the name 'Snyk'")
