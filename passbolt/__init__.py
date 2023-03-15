@@ -27,13 +27,13 @@ class PassboltAPI:
         else:
             self.key, _ = PGPKey.from_blob(self.config.get("private_key"))
             self.fingerprint = self.key.fingerprint.replace(" ", "")
-
         self.base_url = self.config.get("base_url")
         self.login_url = f"{self.base_url}/auth/login.json"
         self.users_url = f"{self.base_url}/users.json"
         self.me_url = f"{self.base_url}/users/me.json"
         self.groups_url = f"{self.base_url}/groups.json"
-
+        self.verify = self.config.get("verify",True)
+        
         # vars definition
         self.authenticated = False
         self.token = None
@@ -41,7 +41,7 @@ class PassboltAPI:
         self.pgp_message = None
         self.nonce = None
 
-        self.session = httpx.Client()
+        self.session = httpx.Client(verify=self.verify)
         self.cookies = httpx.Cookies()
 
         self.login()
@@ -64,6 +64,7 @@ class PassboltAPI:
                 "private_key": os.environ.get("PASSBOLT_PRIVATE_KEY", "undefined"),
                 "passphrase": os.environ.get("PASSBOLT_PASSPHRASE", "undefined"),
                 "fingerprint": os.environ.get("PASSBOLT_FINGERPRINT", "undefined"),
+                "verify": os.environ.get("PASSBOLT_VERIFY", True),
             }
 
     def stage1(self):
