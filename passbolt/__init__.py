@@ -4,6 +4,7 @@ import json
 from urllib.parse import unquote
 from pathlib import Path
 import os
+import re
 from pgpy import PGPKey, PGPMessage
 import gnupg
 
@@ -33,7 +34,7 @@ class PassboltAPI:
         self.me_url = f"{self.base_url}/users/me.json"
         self.groups_url = f"{self.base_url}/groups.json"
         self.verify = self.config.get("verify",True)
-        
+
         # vars definition
         self.authenticated = False
         self.token = None
@@ -136,12 +137,20 @@ class PassboltAPI:
         else:
             return False
 
+    def get_token(self, cookie):
+        pattern = r"csrfToken=([^;]+)"
+        match = re.search(pattern, cookie)
+        if match is not None:
+            return match.group(1)
+        else:
+            return match
+
     def get_cookie(self):
         response = self.session.get(self.me_url)
-        token = response.headers.get("set-cookie")
+        cookie = response.headers.get("set-cookie")
         user_id = json.loads(response.text)
         self.user_id = user_id["body"]["id"]
-        self.token = token[10:-8]
+        self.token = self.get_token(cookie)
         self.session.headers = {"X-CSRF-Token": self.token}
 
     def check_login(self):
