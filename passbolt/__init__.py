@@ -8,6 +8,10 @@ import re
 from pgpy import PGPKey, PGPMessage
 import gnupg
 
+import warnings
+warnings.filterwarnings('ignore', '.*deprecated.*',)
+
+
 # https://pgpy.readthedocs.io/en/latest/examples.html
 
 
