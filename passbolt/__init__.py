@@ -179,7 +179,7 @@ class PassboltAPI:
         return decoded_response["body"]
 
     def get_groups(self):
-        response = self.session.get(self.groups_url)
+        response = self.session.get(self.groups_url + "?contain[group_user]=1")
         decoded_response = json.loads(response.text)
         return decoded_response["body"]
 
@@ -310,7 +310,7 @@ class PassboltAPI:
         :returns: gpgkey dictionary
         :rtype: dict
         """
-        url = f"{self.base_url}/users/{user_id}.json"
+        url = f"{self.base_url}/users/{user_id}.json?contain[profile]=1&contain[gpgKey]=1"
         response = self.session.get(url)
 
         user = json.loads(response.text)["body"]
@@ -330,8 +330,8 @@ class PassboltAPI:
         secrete_data = json.loads(response.text)["body"]
         return secrete_data
 
-    def get_resource_per_uuid(self, uuid):
-        url = f"{self.base_url}/resources/{uuid}.json"
+    def get_resource_per_uuid(self, uuid, querystring=""):
+        url = f"{self.base_url}/resources/{uuid}.json{querystring}"
         response = self.session.get(url)
 
         secrete_data = json.loads(response.text)["body"]
@@ -339,6 +339,80 @@ class PassboltAPI:
 
     def create_resource(self, resource):
         return self.session.post(f"{self.base_url}/resources.json", json=resource)
+
+    def get_current_user(self):
+        response = self.session.get(self.me_url)
+
+        if response.status_code != 200:
+            raise Exception(f"Unexpected http status code {response.status_code}. Body: ${response.text}")
+
+        return json.loads(response.text)['body']
+
+    def share_resource_with_group(self, resource_id, group_id, share_type=7):
+        """
+        Share a resource with a group
+        https://help.passbolt.com/api/resources/share#sharing-a-resource
+        """
+
+        current_user = self.get_current_user()
+        resource = self.get_resource_per_uuid(resource_id, "?contain[permission]=1&contain[permissions.group]=1")
+        group = self.get_group_by_id(group_id)
+
+        if resource == None:
+            raise Exception(f"Resource not found: {resource_id}")
+
+        if group == None:
+            raise Exception(f"Group not found: {group_id}")
+
+        plain_text_secret = self.decrypt(self.get_resource_secret(resource_id))
+
+        permissions = []
+        secrets = []
+
+        for user in group['groups_users']:
+            if user['user_id'] == current_user['id']:
+                # Current user already has access
+                continue
+
+            # Resources should only be shared once
+            for permission in resource['permissions']:
+                if permission['aro'] == 'Group':
+                    if permission['group']['id'] == group_id:
+                        print("Resource already shared with group.")
+                        return
+
+                if permission['aro'] == 'User':
+                    if permission['aro_foreign_key'] == user['user_id']:
+                        # Resources should only be shared once with a user.
+                        continue
+
+            # Encrypt the secret with pubkey of each user
+            user_pub_key = self.get_user_public_key(user['user_id'])
+            secrets.append({
+                "user_id": user['user_id'],
+                "data": self.encrypt(plain_text_secret, user_pub_key),
+            })
+
+            permissions.append({
+                "is_new": True,
+                "aro": "Group",
+                "aro_foreign_key": group_id,
+                "aco": "Resource",
+                "aco_foreign_key": resource_id,
+                "type": share_type,
+            })
+
+        body = {
+            "permissions": permissions,
+            "secrets" : secrets,
+        }
+
+        response = self.session.put(f"{self.base_url}/share/resource/{resource_id}.json", json=body)
+
+        if response.status_code != 200:
+            raise Exception(f"Unexpected http status code: {response.status_code}. Body: {response.text}")
+
+        return json.loads(response.text)["body"]
 
     def get_resource_types(self):
         """
