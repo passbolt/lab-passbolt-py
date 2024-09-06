@@ -340,6 +340,16 @@ class PassboltAPI:
         secrete_data = json.loads(response.text)["body"]
         return secrete_data
 
+    def create_folder(self, folder_name, folder_parent_id=None):
+
+        post = {
+            "folder_parent_id": folder_parent_id,
+            "name": folder_name
+        }
+        response = self.session.post(self.base_url+"/folders.json", json=post)
+
+        return response
+
     def get_resource_per_uuid(self, uuid):
         url = f"{self.base_url}/resources/{uuid}.json"
         response = self.session.get(url)
