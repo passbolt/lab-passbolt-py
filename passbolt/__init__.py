@@ -7,6 +7,7 @@ import os
 import re
 from pgpy import PGPKey, PGPMessage
 import gnupg
+import pyotp
 
 import warnings
 warnings.filterwarnings('ignore', '.*deprecated.*',)

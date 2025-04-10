@@ -1,6 +1,7 @@
 from passbolt import PassboltAPI
 from pprint import pprint
 import json
+import pyotp
 
 with open("config.json") as config_file:
     dict_config = json.load(config_file)
@@ -37,7 +38,7 @@ print()
 print("Search for the first resource who match the name 'Snyk'")
 print("------")
 
-resource = next((item for item in p.get_resources() if item["name"] == "Snyk"), None)
+resource = next((item for item in p.get_resources() if item["name"] == "hjkl"), None)
 pprint(resource)
 
 if resource is not None:
@@ -49,11 +50,23 @@ if resource is not None:
     )
 
     print()
-    print("Display Snyk password")
+    print("Display password")
     print("------")
     print(res["password"])
     print()
-    print("Display Snyk description")
+    print("Display description")
     print("------")
     print(res["description"])
+    print()
+    if res.get('totp'):
+        print("Display totp")
+        print("------")
+        print(res["totp"])
+        secret_key = res['totp']['secret_key']
+        digits = res['totp']['digits']
+        totp = pyotp.TOTP(
+            res['totp']['secret_key'],
+            digits=res['totp']['digits']
+        )
+        print(totp.now())
     print()
