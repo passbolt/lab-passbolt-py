@@ -1,6 +1,46 @@
 [build-system]
 requires = [
-    "setuptools >= 48",
-    "wheel >= 0.29.0",
+    "setuptools <77",
+    "wheel"
 ]
-build-backend = 'setuptools.build_meta'
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "py-passbolt"
+version = "0.0.19"
+description = "Python library for Passbolt, an open-source manager for teams"
+readme = { file = "README.md", content-type = "text/markdown" }
+requires-python = ">=3.6"
+license = { text = "MIT-0" }
+authors = [
+  { name = "Jean-Christophe Vassort", email = "anatomicjc@open-web.fr" }
+]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent"
+]
+dependencies = [
+  "httpx ==0.26.0",
+  "PGPy ==0.6.0",
+  "python-gnupg ==0.5.2",
+  "pyotp ==2.9.0"
+]
+
+[project.urls]
+"Documentation" = "https://github.com/passbolt/lab-passbolt-py/blob/main/README.md"
+"Source" = "https://github.com/passbolt/lab-passbolt-py"
+"Tracker" = "https://github.com/passbolt/lab-passbolt-py/issues"
+
+[project.optional-dependencies]
+test = [
+  "pytest >= 6.2.2",
+  "pycodestyle",
+  "pytest-cov"
+]
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = [""]
+
